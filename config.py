@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv
 SECRET_KEY = os.urandom(32)
 # Grabs the folder where the script runs.
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -7,7 +8,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 DEBUG = True
 
 # Connect to the database
+load_dotenv()
 
-
-# TODO IMPLEMENT DATABASE URL
-SQLALCHEMY_DATABASE_URI = '<Put your local database url>'
+SQLALCHEMY_DATABASE_URI = f"postgresql://{os.environ['DB_USER']}:{os.environ['DB_PWD']}" \
+                          f"@{os.environ['DB_HOST']}:{os.environ['DB_PORT']}L/{os.environ['DB_NAME']}"
