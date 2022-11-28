@@ -11,4 +11,4 @@ DEBUG = True
 load_dotenv()
 
 SQLALCHEMY_DATABASE_URI = f"postgresql://{os.environ['DB_USER']}:{os.environ['DB_PWD']}" \
-                          f"@{os.environ['DB_HOST']}:{os.environ['DB_PORT']}L/{os.environ['DB_NAME']}"
+                          f"@{os.environ['DB_HOST']}:{os.environ['DB_PORT']}/{os.environ['DB_NAME']}"
