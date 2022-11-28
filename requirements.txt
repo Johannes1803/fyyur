@@ -10,3 +10,5 @@ werkzeug==2.0.*
 
 # added requirements
 python-dotenv~=0.21.0
+flask-migrate
+psycopg2-binary
