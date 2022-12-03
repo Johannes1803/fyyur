@@ -3,9 +3,11 @@
 # ----------------------------------------------------------------------------#
 
 import json
+import sys
+
 import dateutil.parser
 import babel
-from flask import Flask, render_template, request, Response, flash, redirect, url_for
+from flask import Flask, render_template, request, Response, flash, redirect, url_for, abort
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
 import logging
@@ -274,13 +276,38 @@ def create_venue_form():
 def create_venue_submission():
     # TODO: insert form data as a new Venue record in the db, instead
     # TODO: modify data to be the data object returned from db insertion
-
-    # on successful db insert, flash success
-    flash("Venue " + request.form["name"] + " was successfully listed!")
-    # TODO: on unsuccessful db insert, flash an error instead.
-    # e.g., flash('An error occurred. Venue ' + data.name + ' could not be listed.')
-    # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
-    return render_template("pages/home.html")
+    form = VenueForm()
+    with app.app_context():
+        venue = Venue(
+            name=form.name,
+            city=form.city,
+            state=form.state,
+            address=form.address,
+            phone=form.phone,
+            genres=form.genres,
+            image_link=form.image_link,
+            website_link=form.website_link,
+            facebook_link=form.facebook_link,
+            is_currently_seeking_talent=form.seeking_talent,
+            quote_talent_seeking=form.seeking_description
+        )
+        error = False
+        try:
+            db.session.add(venue)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            print(sys.exc_info())
+            error = True
+        finally:
+            db.session.close()
+        if error:
+            flash('An error occurred. Venue ' + venue.name + ' could not be listed.')
+            abort(400)
+        else:
+            # on successful db insert, flash success
+            flash("Venue " + venue.name + " was successfully listed!")
+            return render_template("pages/home.html")
 
 
 @app.route("/venues/<venue_id>", methods=["DELETE"])
