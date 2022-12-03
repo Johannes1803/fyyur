@@ -57,8 +57,11 @@ class Artist(db.Model):
     phone = db.Column(db.String(120))
     genres = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
+    website_link = db.Column(db.String(120))
     facebook_link = db.Column(db.String(120))
     shows = db.relationship("Show", backref="artist", lazy=True)
+    is_currently_seeking_performance_venues = db.Column(db.Boolean)
+    quote_venue_seeking = db.Column(db.String(500))
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
@@ -73,6 +76,7 @@ class Show(db.Model):
 # ----------------------------------------------------------------------------#
 # Filters.
 # ----------------------------------------------------------------------------#
+
 
 def format_datetime(value, format='medium'):
     date = dateutil.parser.parse(value)
