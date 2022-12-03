@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import Enum
 from flask_wtf import Form
 from wtforms import (
     StringField,
@@ -8,6 +9,28 @@ from wtforms import (
     BooleanField,
 )
 from wtforms.validators import DataRequired, AnyOf, URL
+
+
+class Genres(Enum):
+    Alternative = "Alternative"
+    Blues = "Blues"
+    Classical = "Classical"
+    Country = "Country"
+    Electronic = "Electronic"
+    Folk = "Folk"
+    Funk = "Funk"
+    Hip_Hop = "Hip-Hop"
+    Heavy_Metal = "Heavy Metal"
+    Instrumental = "Instrumental"
+    Jazz = "Jazz"
+    Musical_Theatre = "Musical Theatre"
+    Pop = "Pop"
+    Punk = "Punk"
+    R_B = "R&B"
+    Reggae = "Reggae"
+    Rock_n_Roll = "Rock n Roll"
+    Soul = "Soul"
+    Other = "Other"
 
 
 class ShowForm(Form):
@@ -86,25 +109,7 @@ class VenueForm(Form):
         "genres",
         validators=[DataRequired()],
         choices=[
-            ("Alternative", "Alternative"),
-            ("Blues", "Blues"),
-            ("Classical", "Classical"),
-            ("Country", "Country"),
-            ("Electronic", "Electronic"),
-            ("Folk", "Folk"),
-            ("Funk", "Funk"),
-            ("Hip-Hop", "Hip-Hop"),
-            ("Heavy Metal", "Heavy Metal"),
-            ("Instrumental", "Instrumental"),
-            ("Jazz", "Jazz"),
-            ("Musical Theatre", "Musical Theatre"),
-            ("Pop", "Pop"),
-            ("Punk", "Punk"),
-            ("R&B", "R&B"),
-            ("Reggae", "Reggae"),
-            ("Rock n Roll", "Rock n Roll"),
-            ("Soul", "Soul"),
-            ("Other", "Other"),
+            (member.name, member.value) for member in Genres
         ],
     )
     facebook_link = StringField("facebook_link", validators=[URL()])
@@ -206,7 +211,6 @@ class ArtistForm(Form):
         ],
     )
     facebook_link = StringField(
-        # TODO implement enum restriction
         "facebook_link",
         validators=[URL()],
     )
