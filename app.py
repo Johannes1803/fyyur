@@ -278,23 +278,25 @@ def create_venue_submission():
     # TODO: modify data to be the data object returned from db insertion
     form = VenueForm()
     with app.app_context():
+        data = {}
         venue = Venue(
-            name=form.name,
-            city=form.city,
-            state=form.state,
-            address=form.address,
-            phone=form.phone,
-            genres=form.genres,
-            image_link=form.image_link,
-            website_link=form.website_link,
-            facebook_link=form.facebook_link,
-            is_currently_seeking_talent=form.seeking_talent,
-            quote_talent_seeking=form.seeking_description
+            name=form.name.data,
+            city=form.city.data,
+            state=form.state.data,
+            address=form.address.data,
+            phone=form.phone.data,
+            genres=form.genres.data,
+            image_link=form.image_link.data,
+            website_link=form.website_link.data,
+            facebook_link=form.facebook_link.data,
+            is_currently_seeking_talent=form.seeking_talent.data,
+            quote_talent_seeking=form.seeking_description.data
         )
         error = False
         try:
             db.session.add(venue)
             db.session.commit()
+            data["name"] = venue.name
         except Exception as e:
             db.session.rollback()
             print(sys.exc_info())
@@ -302,11 +304,11 @@ def create_venue_submission():
         finally:
             db.session.close()
         if error:
-            flash('An error occurred. Venue ' + venue.name + ' could not be listed.')
+            flash(f'An error occurred. Venue {data.get("name")} could not be listed.')
             abort(400)
         else:
             # on successful db insert, flash success
-            flash("Venue " + venue.name + " was successfully listed!")
+            flash(f"Venue {data.get('name')} was successfully listed!")
             return render_template("pages/home.html")
 
 
@@ -316,7 +318,7 @@ def delete_venue(venue_id):
     # SQLAlchemy ORM to delete a record. Handle cases where the session commit could fail.
 
     # BONUS CHALLENGE: Implement a button to delete a Venue on a Venue Page, have it so that
-    # clicking that button delete it from the db then redirect the user to the homepage
+    # clicking that button deletes it from the db then redirect the user to the homepage
     return None
 
 
