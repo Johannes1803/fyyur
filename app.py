@@ -1,3 +1,4 @@
+
 # ----------------------------------------------------------------------------#
 # Imports
 # ----------------------------------------------------------------------------#
@@ -289,8 +290,8 @@ def create_venue_submission():
             image_link=form.image_link.data,
             website=form.website_link.data,
             facebook_link=form.facebook_link.data,
-            is_currently_seeking_talent=form.seeking_talent.data,
-            quote_talent_seeking=form.seeking_description.data
+            seeking_talent=form.seeking_talent.data,
+            seeking_description=form.seeking_description.data
         )
         error = False
         try:
