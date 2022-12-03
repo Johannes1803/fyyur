@@ -76,8 +76,8 @@ class Artist(db.Model):
 class Show(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.DateTime)
-    artist = db.Column(db.Integer, db.ForeignKey("Artist.id"), nullable=False)
-    venue = db.Column(db.Integer, db.ForeignKey("Venue.id"), nullable=False)
+    artist_id = db.Column(db.Integer, db.ForeignKey("Artist.id"), nullable=False)
+    venue_id = db.Column(db.Integer, db.ForeignKey("Venue.id"), nullable=False)
 
 
 # ----------------------------------------------------------------------------#
