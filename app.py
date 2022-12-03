@@ -109,38 +109,24 @@ def index():
 
 @app.route("/venues")
 def venues():
-    # TODO: replace with real venues data.
-    #       num_upcoming_shows should be aggregated based on number of upcoming shows per venue.
-    data = [
-        {
-            "city": "San Francisco",
-            "state": "CA",
-            "venues": [
-                {
-                    "id": 1,
-                    "name": "The Musical Hop",
-                    "num_upcoming_shows": 0,
-                },
-                {
-                    "id": 3,
-                    "name": "Park Square Live Music & Coffee",
-                    "num_upcoming_shows": 1,
-                },
-            ],
-        },
-        {
-            "city": "New York",
-            "state": "NY",
-            "venues": [
-                {
-                    "id": 2,
-                    "name": "The Dueling Pianos Bar",
-                    "num_upcoming_shows": 0,
-                }
-            ],
-        },
-    ]
-    return render_template("pages/venues.html", areas=data)
+    all_venues = Venue.query.order_by(Venue.name).all()
+
+    venues_with_distinct_location = Venue.query.distinct(
+        Venue.city,
+        Venue.state
+    ).order_by(
+        Venue.city.desc(),
+        Venue.state.desc()
+    ).all()
+
+    places_as_dict = [{"state": venue.state, "city": venue.city} for venue in venues_with_distinct_location]
+    for place in places_as_dict:
+        place["venues"] = []
+        for venue in all_venues:
+            if venue.state == place.get("state") and venue.city == place.get("city"):
+                place["venues"].append(venue)
+
+    return render_template("pages/venues.html", areas=places_as_dict)
 
 
 @app.route("/venues/search", methods=["POST"])
@@ -168,7 +154,6 @@ def search_venues():
 @app.route("/venues/<int:venue_id>")
 def show_venue(venue_id):
     # shows the venue page with the given venue_id
-    # TODO: error handling
     with app.app_context():
         venue = Venue.query.get(venue_id)
 
