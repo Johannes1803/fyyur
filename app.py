@@ -172,8 +172,6 @@ def create_venue_form():
 
 @app.route("/venues/create", methods=["POST"])
 def create_venue_submission():
-    # TODO: insert form data as a new Venue record in the db, instead
-    # TODO: modify data to be the data object returned from db insertion
     form = VenueForm()
     with app.app_context():
         data = {}
@@ -422,14 +420,39 @@ def create_artist_form():
 @app.route("/artists/create", methods=["POST"])
 def create_artist_submission():
     # called upon submitting the new artist listing form
-    # TODO: insert form data as a new Venue record in the db, instead
-    # TODO: modify data to be the data object returned from db insertion
-
-    # on successful db insert, flash success
-    flash("Artist " + request.form["name"] + " was successfully listed!")
-    # TODO: on unsuccessful db insert, flash an error instead.
-    # e.g., flash('An error occurred. Artist ' + data.name + ' could not be listed.')
-    return render_template("pages/home.html")
+    form = ArtistForm()
+    with app.app_context():
+        data = {}
+        artist = Artist(
+            name=form.name.data,
+            city=form.city.data,
+            state=form.state.data,
+            phone=form.phone.data,
+            genres=form.genres.data,
+            image_link=form.image_link.data,
+            website=form.website_link.data,
+            facebook_link=form.facebook_link.data,
+            seeking_venue=form.seeking_venue.data,
+            seeking_description=form.seeking_description.data
+        )
+        error = False
+        try:
+            db.session.add(artist)
+            db.session.commit()
+            data["name"] = artist.name
+        except Exception as e:
+            db.session.rollback()
+            print(sys.exc_info())
+            error = True
+        finally:
+            db.session.close()
+        if error:
+            flash(f'An error occurred. Artist {data.get("name")} could not be listed.')
+            abort(400)
+        else:
+            # on successful db insert, flash success
+            flash(f"Artist {data.get('name')} was successfully listed!")
+            return render_template("pages/home.html")
 
 
 #  Shows
