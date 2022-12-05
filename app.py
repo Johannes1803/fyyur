@@ -1,4 +1,3 @@
-
 # ----------------------------------------------------------------------------#
 # Imports
 # ----------------------------------------------------------------------------#
@@ -8,7 +7,16 @@ import sys
 
 import dateutil.parser
 import babel
-from flask import Flask, render_template, request, Response, flash, redirect, url_for, abort
+from flask import (
+    Flask,
+    render_template,
+    request,
+    Response,
+    flash,
+    redirect,
+    url_for,
+    abort,
+)
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
 import logging
@@ -16,6 +24,7 @@ from logging import Formatter, FileHandler
 from flask_wtf import Form
 from forms import *
 from flask_migrate import Migrate
+from sqlalchemy.exc import IntegrityError
 
 # ----------------------------------------------------------------------------#
 # App Config.
@@ -111,15 +120,16 @@ def index():
 def venues():
     all_venues = Venue.query.order_by(Venue.name).all()
 
-    venues_with_distinct_location = Venue.query.distinct(
-        Venue.city,
-        Venue.state
-    ).order_by(
-        Venue.city.desc(),
-        Venue.state.desc()
-    ).all()
+    venues_with_distinct_location = (
+        Venue.query.distinct(Venue.city, Venue.state)
+        .order_by(Venue.city.desc(), Venue.state.desc())
+        .all()
+    )
 
-    places_as_dict = [{"state": venue.state, "city": venue.city} for venue in venues_with_distinct_location]
+    places_as_dict = [
+        {"state": venue.state, "city": venue.city}
+        for venue in venues_with_distinct_location
+    ]
     for place in places_as_dict:
         place["venues"] = []
         for venue in all_venues:
@@ -186,7 +196,7 @@ def create_venue_submission():
             website=form.website_link.data,
             facebook_link=form.facebook_link.data,
             seeking_talent=form.seeking_talent.data,
-            seeking_description=form.seeking_description.data
+            seeking_description=form.seeking_description.data,
         )
         error = False
         try:
@@ -341,7 +351,7 @@ def create_artist_submission():
             website=form.website_link.data,
             facebook_link=form.facebook_link.data,
             seeking_venue=form.seeking_venue.data,
-            seeking_description=form.seeking_description.data
+            seeking_description=form.seeking_description.data,
         )
         error = False
         try:
@@ -427,13 +437,37 @@ def create_shows():
 def create_show_submission():
     # called to create new shows in the db, upon submitting new show listing form
     # TODO: insert form data as a new Show record in the db, instead
-
-    # on successful db insert, flash success
-    flash("Show was successfully listed!")
-    # TODO: on unsuccessful db insert, flash an error instead.
-    # e.g., flash('An error occurred. Show could not be listed.')
-    # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
-    return render_template("pages/home.html")
+    form = ShowForm()
+    with app.app_context():
+        show = Show(
+            date=form.start_time.data,
+            artist_id=form.artist_id.data,
+            venue_id=form.venue_id.data,
+        )
+        error = False
+        try:
+            db.session.add(show)
+            db.session.commit()
+        except IntegrityError as e:
+            flash(
+                f"Make sure that venue id and artist id exist. Show could not be listed."
+            )
+            error = True
+            db.session.rollback()
+            print(sys.exc_info())
+        except Exception as e:
+            db.session.rollback()
+            print(sys.exc_info())
+            error = True
+        finally:
+            db.session.close()
+        if error:
+            flash(f"An error occurred. Show could not be listed.")
+            abort(400)
+        else:
+            # on successful db insert, flash success
+            flash("Show was successfully listed!")
+            return render_template("pages/home.html")
 
 
 @app.errorhandler(404)
