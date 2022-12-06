@@ -1,7 +1,7 @@
 # ----------------------------------------------------------------------------#
 # Imports
 # ----------------------------------------------------------------------------#
-
+import datetime
 import json
 import sys
 
@@ -25,6 +25,7 @@ from flask_wtf import Form
 from forms import *
 from flask_migrate import Migrate
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
 
 # ----------------------------------------------------------------------------#
 # App Config.
@@ -56,9 +57,21 @@ class Venue(db.Model):
     image_link = db.Column(db.String(500))
     website = db.Column(db.String(120))
     facebook_link = db.Column(db.String(120))
-    shows = db.relationship("Show", backref="venue", lazy=True)
+    shows = db.relationship("Show", backref="venue", lazy="joined")
     seeking_talent = db.Column(db.Boolean)
     seeking_description = db.Column(db.String(500))
+
+    def __int__(self, shows=None):
+        self.shows = shows
+
+
+    @hybrid_property
+    def upcoming_shows(self):
+        return [show for show in self.shows if show.is_upcoming]
+
+    @hybrid_property
+    def upcoming_shows_count(self):
+        return len(self.upcoming_shows)
 
 
 class Artist(db.Model):
@@ -73,16 +86,32 @@ class Artist(db.Model):
     image_link = db.Column(db.String(500))
     website = db.Column(db.String(120))
     facebook_link = db.Column(db.String(120))
-    shows = db.relationship("Show", backref="artist", lazy=True)
+    shows = db.relationship("Show", backref="artist", lazy="joined")
     seeking_venue = db.Column(db.Boolean)
     seeking_description = db.Column(db.String(500))
 
 
 class Show(db.Model):
+    def __init__(self):
+        self._is_upcoming = None
+
     id = db.Column(db.Integer, primary_key=True)
-    date = db.Column(db.DateTime)
+    start_time = db.Column(db.DateTime, nullable=False)
     artist_id = db.Column(db.Integer, db.ForeignKey("Artist.id"), nullable=False)
     venue_id = db.Column(db.Integer, db.ForeignKey("Venue.id"), nullable=False)
+
+
+
+    @hybrid_property
+    def is_upcoming(self) -> bool:
+        """
+        Return true if show is in the future.
+        """
+        if self.start_time >= datetime.now():
+            self._is_upcoming = True
+        else:
+            self._is_upcoming = False
+        return self._is_upcoming
 
 
 # ----------------------------------------------------------------------------#
@@ -91,7 +120,11 @@ class Show(db.Model):
 
 
 def format_datetime(value, format="medium"):
-    date = dateutil.parser.parse(value)
+    app.logger.debug(f"value in format datetime: {value}, type: {type(value)}")
+    try:
+        date = dateutil.parser.parse(value)
+    except TypeError:
+        date = value
     if format == "full":
         format = "EEEE MMMM, d, y 'at' h:mma"
     elif format == "medium":
@@ -118,25 +151,28 @@ def index():
 
 @app.route("/venues")
 def venues():
-    all_venues = Venue.query.order_by(Venue.name).all()
+    with app.app_context():
+        all_venues = Venue.query.order_by(Venue.name).all()
 
-    venues_with_distinct_location = (
-        Venue.query.distinct(Venue.city, Venue.state)
-        .order_by(Venue.city.desc(), Venue.state.desc())
-        .all()
-    )
+        app.logger.debug(all_venues[0].upcoming_shows)
 
-    places_as_dict = [
-        {"state": venue.state, "city": venue.city}
-        for venue in venues_with_distinct_location
-    ]
-    for place in places_as_dict:
-        place["venues"] = []
-        for venue in all_venues:
-            if venue.state == place.get("state") and venue.city == place.get("city"):
-                place["venues"].append(venue)
+        venues_with_distinct_location = (
+            Venue.query.distinct(Venue.city, Venue.state)
+            .order_by(Venue.city.desc(), Venue.state.desc())
+            .all()
+        )
 
-    return render_template("pages/venues.html", areas=places_as_dict)
+        places_as_dict = [
+            {"state": venue.state, "city": venue.city}
+            for venue in venues_with_distinct_location
+        ]
+        for place in places_as_dict:
+            place["venues"] = []
+            for venue in all_venues:
+                if venue.state == place.get("state") and venue.city == place.get("city"):
+                    place["venues"].append(venue)
+
+        return render_template("pages/venues.html", areas=places_as_dict)
 
 
 @app.route("/venues/search", methods=["POST"])
@@ -166,6 +202,7 @@ def show_venue(venue_id):
     # shows the venue page with the given venue_id
     with app.app_context():
         venue = Venue.query.get(venue_id)
+
 
     return render_template("pages/show_venue.html", venue=venue)
 
@@ -440,7 +477,7 @@ def create_show_submission():
     form = ShowForm()
     with app.app_context():
         show = Show(
-            date=form.start_time.data,
+            start_time=form.start_time.data,
             artist_id=form.artist_id.data,
             venue_id=form.venue_id.data,
         )
