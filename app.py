@@ -456,7 +456,7 @@ def create_show_submission():
                 print(sys.exc_info())
             except sqlalchemy.exc.DataError as e:
                 flash(
-                    f"Make sure that venue id and artist id are numbers. Show could not be listed."
+                    f"Make sure that venue id and artist id are integers. Show could not be listed."
                 )
                 db.session.rollback()
                 print(sys.exc_info())
