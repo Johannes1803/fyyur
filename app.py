@@ -61,15 +61,12 @@ class Venue(db.Model):
     seeking_talent = db.Column(db.Boolean)
     seeking_description = db.Column(db.String(500))
 
-    def __int__(self, shows=None):
-        self.shows = shows
 
-
-    @hybrid_property
+    @property
     def upcoming_shows(self):
         return [show for show in self.shows if show.is_upcoming]
 
-    @hybrid_property
+    @property
     def upcoming_shows_count(self):
         return len(self.upcoming_shows)
 
@@ -102,7 +99,7 @@ class Show(db.Model):
 
 
 
-    @hybrid_property
+    @property
     def is_upcoming(self) -> bool:
         """
         Return true if show is in the future.
