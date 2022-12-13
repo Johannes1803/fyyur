@@ -7,8 +7,9 @@ from wtforms import (
     SelectMultipleField,
     DateTimeField,
     BooleanField,
+    IntegerField
 )
-from wtforms.validators import DataRequired, AnyOf, URL
+from wtforms.validators import DataRequired, AnyOf, URL, NumberRange
 
 
 class Genres(Enum):
@@ -34,8 +35,8 @@ class Genres(Enum):
 
 
 class ShowForm(Form):
-    artist_id = StringField("artist_id")
-    venue_id = StringField("venue_id")
+    artist_id = IntegerField("artist_id", validators=[DataRequired(), NumberRange(min=1) ])
+    venue_id = IntegerField("venue_id", validators=[DataRequired(), NumberRange(min=1)])
     start_time = DateTimeField(
         "start_time", validators=[DataRequired()], default=datetime.today()
     )

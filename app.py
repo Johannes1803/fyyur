@@ -7,6 +7,7 @@ import sys
 
 import dateutil.parser
 import babel
+import sqlalchemy
 from flask import (
     Flask,
     render_template,
@@ -25,7 +26,7 @@ from flask_wtf import Form
 from forms import *
 from flask_migrate import Migrate
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
+from flask_wtf.csrf import CSRFProtect
 
 # ----------------------------------------------------------------------------#
 # App Config.
@@ -35,6 +36,7 @@ app = Flask(__name__)
 moment = Moment(app)
 app.config.from_object("config")
 db = SQLAlchemy(app)
+csrf = CSRFProtect(app)
 
 migrate = Migrate(app, db)
 
@@ -433,38 +435,47 @@ def create_shows():
 @app.route("/shows/create", methods=["POST"])
 def create_show_submission():
     # called to create new shows in the db, upon submitting new show listing form
-    # TODO: insert form data as a new Show record in the db, instead
     form = ShowForm()
-    with app.app_context():
-        show = Show(
-            start_time=form.start_time.data,
-            artist_id=form.artist_id.data,
-            venue_id=form.venue_id.data,
-        )
-        error = False
-        try:
-            db.session.add(show)
-            db.session.commit()
-        except IntegrityError as e:
-            flash(
-                f"Make sure that venue id and artist id exist. Show could not be listed."
+    if form.validate_on_submit():
+        with app.app_context():
+            show = Show(
+                start_time=form.start_time.data,
+                artist_id=form.artist_id.data,
+                venue_id=form.venue_id.data,
             )
-            error = True
-            db.session.rollback()
-            print(sys.exc_info())
-        except Exception as e:
-            db.session.rollback()
-            print(sys.exc_info())
-            error = True
-        finally:
-            db.session.close()
-        if error:
-            flash(f"An error occurred. Show could not be listed.")
-            abort(400)
-        else:
-            # on successful db insert, flash success
-            flash("Show was successfully listed!")
-            return render_template("pages/home.html")
+            error = False
+            try:
+                db.session.add(show)
+                db.session.commit()
+            except IntegrityError as e:
+                flash(
+                    f"Make sure that venue id and artist id exist. Show could not be listed."
+                )
+                error = True
+                db.session.rollback()
+                print(sys.exc_info())
+            except sqlalchemy.exc.DataError as e:
+                flash(
+                    f"Make sure that venue id and artist id are numbers. Show could not be listed."
+                )
+                db.session.rollback()
+                print(sys.exc_info())
+                error = True
+            finally:
+                db.session.close()
+            if error:
+                flash(f"An error occurred. Show could not be listed.")
+                return render_template("pages/home.html")
+            else:
+                # on successful db insert, flash success
+                flash("Show was successfully listed!")
+                return render_template("pages/home.html")
+    else:
+        message = []
+        for field, err in form.errors.items():
+            message.append(field + ' ' + '|'.join(err))
+        flash('Errors ' + str(message))
+        return render_template("forms/new_show.html", form=form)
 
 
 @app.errorhandler(404)
