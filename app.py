@@ -102,10 +102,6 @@ class Show(db.Model):
     artist_id = db.Column(db.Integer, db.ForeignKey("Artist.id"), nullable=False)
     venue_id = db.Column(db.Integer, db.ForeignKey("Venue.id"), nullable=False)
 
-    def __init__(self, is_upcoming=None):
-        self._is_upcoming = is_upcoming
-
-
 
     @property
     def is_upcoming(self) -> bool:
