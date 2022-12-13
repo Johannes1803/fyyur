@@ -202,9 +202,7 @@ def show_venue(venue_id):
     # shows the venue page with the given venue_id
     with app.app_context():
         venue = Venue.query.get(venue_id)
-
-
-    return render_template("pages/show_venue.html", venue=venue)
+        return render_template("pages/show_venue.html", venue=venue)
 
 
 #  Create Venue
