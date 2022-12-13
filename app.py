@@ -67,8 +67,16 @@ class Venue(db.Model):
         return [show for show in self.shows if show.is_upcoming]
 
     @property
+    def past_shows(self):
+        return [show for show in self.shows if show.is_in_past]
+
+    @property
     def upcoming_shows_count(self):
         return len(self.upcoming_shows)
+
+    @property
+    def past_shows_count(self):
+        return len(self.past_shows)
 
 
 class Artist(db.Model):
@@ -89,13 +97,13 @@ class Artist(db.Model):
 
 
 class Show(db.Model):
-    def __init__(self):
-        self._is_upcoming = None
-
     id = db.Column(db.Integer, primary_key=True)
     start_time = db.Column(db.DateTime, nullable=False)
     artist_id = db.Column(db.Integer, db.ForeignKey("Artist.id"), nullable=False)
     venue_id = db.Column(db.Integer, db.ForeignKey("Venue.id"), nullable=False)
+
+    def __init__(self, is_upcoming=None):
+        self._is_upcoming = is_upcoming
 
 
 
@@ -110,6 +118,13 @@ class Show(db.Model):
             self._is_upcoming = False
         return self._is_upcoming
 
+    @property
+    def is_in_past(self) -> bool:
+        """
+        Return true if show is in the past.
+        """
+        return not self._is_upcoming
+
 
 # ----------------------------------------------------------------------------#
 # Filters.
@@ -117,7 +132,6 @@ class Show(db.Model):
 
 
 def format_datetime(value, format="medium"):
-    app.logger.debug(f"value in format datetime: {value}, type: {type(value)}")
     try:
         date = dateutil.parser.parse(value)
     except TypeError:
@@ -150,8 +164,6 @@ def index():
 def venues():
     with app.app_context():
         all_venues = Venue.query.order_by(Venue.name).all()
-
-        app.logger.debug(all_venues[0].upcoming_shows)
 
         venues_with_distinct_location = (
             Venue.query.distinct(Venue.city, Venue.state)
