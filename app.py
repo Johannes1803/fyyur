@@ -251,17 +251,52 @@ def edit_artist(artist_id):
             facebook_link=artist.facebook_link,
             website_link=artist.website_link,
             seeking_venue=artist.seeking_venue,
-            seeking_description=artist.seeking_description
+            seeking_description=artist.seeking_description,
         )
         return render_template("forms/edit_artist.html", form=form, artist=artist)
 
 
 @app.route("/artists/<int:artist_id>/edit", methods=["POST"])
 def edit_artist_submission(artist_id):
-    # TODO: take values from the form submitted, and update existing
-    # artist record with ID <artist_id> using the new attributes
+    form = ArtistForm()
+    if form.validate_on_submit():
+        app.logger.debug(f"form.seeking_venue.data: {form.seeking_venue.data}")
+        with app.app_context():
+            error = False
+            try:
+                artist = Artist.query.get(artist_id)
 
-    return redirect(url_for("show_artist", artist_id=artist_id))
+                artist.name = form.name.data
+                artist.city = form.city.data
+                artist.state = form.state.data
+                artist.phone = form.phone.data
+                artist.genres = form.genres.data
+                artist.image_link = form.image_link.data
+                artist.website_link = form.website_link.data
+                artist.facebook_link = form.facebook_link.data
+                artist.seeking_venue = form.seeking_venue.data
+                artist.seeking_description = form.seeking_description.data
+
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                print(sys.exc_info())
+                error = True
+            finally:
+                db.session.close()
+            if error:
+                flash(f"An error occurred. Artist could not be updated.")
+                abort(400)
+            else:
+                # on successful db insert, flash success
+                flash(f"Artist was successfully updated!")
+                return render_template("pages/home.html")
+    else:
+        message = []
+        for field, err in form.errors.items():
+            message.append(field + " " + "|".join(err))
+        flash("Errors " + str(message))
+        return redirect(url_for("edit_artist", artist_id=artist_id))
 
 
 @app.route("/venues/<int:venue_id>/edit", methods=["GET"])
@@ -319,7 +354,7 @@ def create_artist_submission():
                 website=form.website_link.data,
                 facebook_link=form.facebook_link.data,
                 seeking_venue=form.seeking_venue.data,
-                seeking_description=form.seeking_description.data,
+                seeking_description=form.seeking_description.data
             )
             error = False
             try:
