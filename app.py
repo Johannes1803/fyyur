@@ -124,10 +124,11 @@ def search_venues():
 @app.route("/venues/<int:venue_id>")
 def show_venue(venue_id):
     # shows the venue page with the given venue_id
+    form = VenueForm()
     with app.app_context():
         venue = Venue.query.get(venue_id)
         app.logger.debug(venue.upcoming_shows)
-        return render_template("pages/show_venue.html", venue=venue)
+        return render_template("pages/show_venue.html", venue=venue, form=form)
 
 
 #  Create Venue
@@ -187,14 +188,25 @@ def create_venue_submission():
         return render_template("forms/new_venue.html", form=form)
 
 
-@app.route("/venues/<venue_id>", methods=["DELETE"])
+@app.route("/venues/<venue_id>/delete", methods=["POST"])
 def delete_venue(venue_id):
-    # TODO: Complete this endpoint for taking a venue_id, and using
-    # SQLAlchemy ORM to delete a record. Handle cases where the session commit could fail.
+    with app.app_context():
+        try:
+            venue = Venue.query.get(venue_id)
+            db.session.delete(venue)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            print(sys.exc_info())
+            flash("Venue could not be deleted", category="error")
+        else:
+            flash("Venue successfully deleted.")
+        finally:
+            db.session.close()
+            return redirect(url_for("index"))
 
     # BONUS CHALLENGE: Implement a button to delete a Venue on a Venue Page, have it so that
     # clicking that button deletes it from the db then redirect the user to the homepage
-    return None
 
 
 #  Artists
@@ -259,13 +271,13 @@ def edit_artist(artist_id):
 @app.route("/artists/<int:artist_id>/edit", methods=["POST"])
 def edit_artist_submission(artist_id):
     form = ArtistForm()
+    artist = Artist.query.get(artist_id)
+
     if form.validate_on_submit():
         app.logger.debug(f"form.seeking_venue.data: {form.seeking_venue.data}")
         with app.app_context():
             error = False
             try:
-                artist = Artist.query.get(artist_id)
-
                 artist.name = form.name.data
                 artist.city = form.city.data
                 artist.state = form.state.data
@@ -296,7 +308,7 @@ def edit_artist_submission(artist_id):
         for field, err in form.errors.items():
             message.append(field + " " + "|".join(err))
         flash("Errors " + str(message))
-        return redirect(url_for("edit_artist", artist_id=artist_id))
+        return render_template("forms/edit_artist.html", artist=artist, form=form)
 
 
 @app.route("/venues/<int:venue_id>/edit", methods=["GET"])
@@ -321,9 +333,46 @@ def edit_venue(venue_id):
 
 @app.route("/venues/<int:venue_id>/edit", methods=["POST"])
 def edit_venue_submission(venue_id):
-    # TODO: take values from the form submitted, and update existing
-    # venue record with ID <venue_id> using the new attributes
-    return redirect(url_for("show_venue", venue_id=venue_id))
+    form = VenueForm()
+    venue = Venue.query.get(venue_id)
+
+    if form.validate_on_submit():
+        with app.app_context():
+            error = False
+            try:
+                venue.name = form.name.data
+                venue.city = form.city.data
+                venue.state = form.state.data
+                venue.address = form.address.data
+                venue.phone = form.phone.data
+                venue.genres = form.genres.data
+                venue.image_link = form.image_link.data
+                venue.website_link = form.website_link.data
+                venue.facebook_link = form.facebook_link.data
+                venue.seeking_talent = form.seeking_talent.data
+                venue.seeking_description = form.seeking_description.data
+
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                print(sys.exc_info())
+                error = True
+            finally:
+                db.session.close()
+            if error:
+                flash(f"An error occurred. Artist could not be updated.")
+                abort(400)
+            else:
+                # on successful db insert, flash success
+                flash(f"Artist was successfully updated!")
+                return render_template("pages/home.html")
+
+    else:
+        message = []
+        for field, err in form.errors.items():
+            message.append(field + " " + "|".join(err))
+        flash("Errors " + str(message))
+        return render_template("forms/edit_venue.html", form=form, venue=venue)
 
 
 #  Create Artist
