@@ -9,7 +9,8 @@ from wtforms import (
     BooleanField,
     IntegerField
 )
-from wtforms.validators import DataRequired, AnyOf, URL, NumberRange
+from wtforms.validators import DataRequired, AnyOf, URL, NumberRange, ValidationError
+import phonenumbers
 
 
 class Genres(Enum):
@@ -33,6 +34,22 @@ class Genres(Enum):
     Soul = "Soul"
     Other = "Other"
 
+
+class PhoneNumber(object):
+    def __init__(self, message=None):
+        if not message:
+            message = 'This is not a valid phone number. Please try again.'
+        self.message = message
+
+    def __call__(self, form, field):
+        try:
+            phone_number_parsed = phonenumbers.parse(field.data)
+            if not phonenumbers.is_possible_number(phone_number_parsed):
+                raise ValidationError(self.message)
+        except Exception:
+            raise ValidationError(self.message)
+
+phone_number = PhoneNumber
 
 class ShowForm(Form):
     artist_id = IntegerField("artist_id", validators=[DataRequired(), NumberRange(min=1) ])
@@ -103,7 +120,7 @@ class VenueForm(Form):
         ],
     )
     address = StringField("address", validators=[DataRequired()])
-    phone = StringField("phone")
+    phone = StringField("phone", validators=[PhoneNumber()])
     image_link = StringField("image_link")
     genres = SelectMultipleField(
         "genres",
@@ -181,8 +198,7 @@ class ArtistForm(Form):
         ],
     )
     phone = StringField(
-        # TODO implement validation logic for phone
-        "phone"
+        "phone", validators=[PhoneNumber()]
     )
     image_link = StringField("image_link")
     genres = SelectMultipleField(
