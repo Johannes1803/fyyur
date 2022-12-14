@@ -464,17 +464,12 @@ def create_show_submission():
             finally:
                 db.session.close()
             if error:
-                flash(f"An error occurred. Show could not be listed.")
                 return render_template("pages/home.html")
             else:
                 # on successful db insert, flash success
                 flash("Show was successfully listed!")
                 return render_template("pages/home.html")
     else:
-        message = []
-        for field, err in form.errors.items():
-            message.append(field + ' ' + '|'.join(err))
-        flash('Errors ' + str(message))
         return render_template("forms/new_show.html", form=form)
 
 
