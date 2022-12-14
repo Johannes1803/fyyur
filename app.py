@@ -154,7 +154,7 @@ def create_venue_submission():
                 phone=form.phone.data,
                 genres=form.genres.data,
                 image_link=form.image_link.data,
-                website=form.website_link.data,
+                website_link=form.website_link.data,
                 facebook_link=form.facebook_link.data,
                 seeking_talent=form.seeking_talent.data,
                 seeking_description=form.seeking_description.data,
@@ -249,7 +249,7 @@ def edit_artist(artist_id):
             image_link=artist.image_link,
             genres=artist.genres,
             facebook_link=artist.facebook_link,
-            website_link=artist.website,
+            website_link=artist.website_link,
             seeking_venue=artist.seeking_venue,
             seeking_description=artist.seeking_description
         )
