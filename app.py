@@ -221,8 +221,7 @@ def show_artist(artist_id):
     # shows the artist page with the given artist_id
     with app.app_context():
         artist = Artist.query.get(artist_id)
-
-    return render_template("pages/show_artist.html", artist=artist)
+        return render_template("pages/show_artist.html", artist=artist)
 
 
 #  Update

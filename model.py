@@ -56,6 +56,22 @@ class Artist(db.Model):
     seeking_venue = db.Column(db.Boolean)
     seeking_description = db.Column(db.String(500))
 
+    @property
+    def upcoming_shows(self):
+        return [show for show in self.shows if show.is_upcoming]
+
+    @property
+    def past_shows(self):
+        return [show for show in self.shows if show.is_in_past]
+
+    @property
+    def upcoming_shows_count(self):
+        return len(self.upcoming_shows)
+
+    @property
+    def past_shows_count(self):
+        return len(self.past_shows)
+
 
 class Show(db.Model):
     id = db.Column(db.Integer, primary_key=True)
