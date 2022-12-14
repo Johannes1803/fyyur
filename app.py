@@ -1,8 +1,6 @@
 # ----------------------------------------------------------------------------#
 # Imports
 # ----------------------------------------------------------------------------#
-import datetime
-import json
 import sys
 
 import dateutil.parser
@@ -12,21 +10,20 @@ from flask import (
     Flask,
     render_template,
     request,
-    Response,
     flash,
     redirect,
     url_for,
     abort,
 )
 from flask_moment import Moment
-from flask_sqlalchemy import SQLAlchemy
 import logging
 from logging import Formatter, FileHandler
-from flask_wtf import Form
 from forms import *
 from flask_migrate import Migrate
 from sqlalchemy.exc import IntegrityError
 from flask_wtf.csrf import CSRFProtect
+
+from model import Venue, Artist, Show, db
 
 # ----------------------------------------------------------------------------#
 # App Config.
@@ -35,94 +32,12 @@ from flask_wtf.csrf import CSRFProtect
 app = Flask(__name__)
 moment = Moment(app)
 app.config.from_object("config")
-db = SQLAlchemy(app)
+db.app = app
+db.init_app(app)
+
 csrf = CSRFProtect(app)
 
 migrate = Migrate(app, db)
-
-
-# ----------------------------------------------------------------------------#
-# Models.
-# ----------------------------------------------------------------------------#
-
-
-class Venue(db.Model):
-    __tablename__ = "Venue"
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    city = db.Column(db.String(120))
-    state = db.Column(db.String(120))
-    address = db.Column(db.String(120))
-    phone = db.Column(db.String(120))
-    genres = db.Column(db.ARRAY(db.String), nullable=False)
-    image_link = db.Column(db.String(500))
-    website = db.Column(db.String(120))
-    facebook_link = db.Column(db.String(120))
-    shows = db.relationship("Show", backref="venue", lazy="joined")
-    seeking_talent = db.Column(db.Boolean)
-    seeking_description = db.Column(db.String(500))
-
-
-    @property
-    def upcoming_shows(self):
-        return [show for show in self.shows if show.is_upcoming]
-
-    @property
-    def past_shows(self):
-        return [show for show in self.shows if show.is_in_past]
-
-    @property
-    def upcoming_shows_count(self):
-        return len(self.upcoming_shows)
-
-    @property
-    def past_shows_count(self):
-        return len(self.past_shows)
-
-
-class Artist(db.Model):
-    __tablename__ = "Artist"
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    city = db.Column(db.String(120))
-    state = db.Column(db.String(120))
-    phone = db.Column(db.String(120))
-    genres = db.Column(db.ARRAY(db.String), nullable=False)
-    image_link = db.Column(db.String(500))
-    website = db.Column(db.String(120))
-    facebook_link = db.Column(db.String(120))
-    shows = db.relationship("Show", backref="artist", lazy="joined")
-    seeking_venue = db.Column(db.Boolean)
-    seeking_description = db.Column(db.String(500))
-
-
-class Show(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    start_time = db.Column(db.DateTime, nullable=False)
-    artist_id = db.Column(db.Integer, db.ForeignKey("Artist.id"), nullable=False)
-    venue_id = db.Column(db.Integer, db.ForeignKey("Venue.id"), nullable=False)
-
-
-    @property
-    def is_upcoming(self) -> bool:
-        """
-        Return true if show is in the future.
-        """
-        if self.start_time >= datetime.now():
-            self._is_upcoming = True
-        else:
-            self._is_upcoming = False
-        return self._is_upcoming
-
-    @property
-    def is_in_past(self) -> bool:
-        """
-        Return true if show is in the past.
-        """
-        return not self._is_upcoming
-
 
 # ----------------------------------------------------------------------------#
 # Filters.
@@ -209,6 +124,7 @@ def show_venue(venue_id):
     # shows the venue page with the given venue_id
     with app.app_context():
         venue = Venue.query.get(venue_id)
+        app.logger.debug(venue.upcoming_shows)
         return render_template("pages/show_venue.html", venue=venue)
 
 
