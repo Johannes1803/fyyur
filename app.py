@@ -91,7 +91,9 @@ def venues():
         for place in places_as_dict:
             place["venues"] = []
             for venue in all_venues:
-                if venue.state == place.get("state") and venue.city == place.get("city"):
+                if venue.state == place.get("state") and venue.city == place.get(
+                    "city"
+                ):
                     place["venues"].append(venue)
 
         return render_template("pages/venues.html", areas=places_as_dict)
@@ -169,7 +171,9 @@ def create_venue_submission():
             finally:
                 db.session.close()
             if error:
-                flash(f'An error occurred. Venue {data.get("name")} could not be listed.')
+                flash(
+                    f'An error occurred. Venue {data.get("name")} could not be listed.'
+                )
                 abort(400)
             else:
                 # on successful db insert, flash success
@@ -178,9 +182,10 @@ def create_venue_submission():
     else:
         message = []
         for field, err in form.errors.items():
-            message.append(field + ' ' + '|'.join(err))
-        flash('Errors ' + str(message))
+            message.append(field + " " + "|".join(err))
+        flash("Errors " + str(message))
         return render_template("forms/new_venue.html", form=form)
+
 
 @app.route("/venues/<venue_id>", methods=["DELETE"])
 def delete_venue(venue_id):
@@ -234,22 +239,21 @@ def show_artist(artist_id):
 #  ----------------------------------------------------------------
 @app.route("/artists/<int:artist_id>/edit", methods=["GET"])
 def edit_artist(artist_id):
-    form = ArtistForm()
-    artist = {
-        "id": 4,
-        "name": "Guns N Petals",
-        "genres": ["Rock n Roll"],
-        "city": "San Francisco",
-        "state": "CA",
-        "phone": "326-123-5000",
-        "website": "https://www.gunsnpetalsband.com",
-        "facebook_link": "https://www.facebook.com/GunsNPetals",
-        "seeking_venue": True,
-        "seeking_description": "Looking for shows to perform at in the San Francisco Bay Area!",
-        "image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
-    }
-    # TODO: populate form with fields from artist with ID <artist_id>
-    return render_template("forms/edit_artist.html", form=form, artist=artist)
+    with app.app_context():
+        artist = Artist.query.get(artist_id)
+        form = ArtistForm(
+            name=artist.name,
+            city=artist.city,
+            state=artist.state,
+            phone=artist.phone,
+            image_link=artist.image_link,
+            genres=artist.genres,
+            facebook_link=artist.facebook_link,
+            website_link=artist.website,
+            seeking_venue=artist.seeking_venue,
+            seeking_description=artist.seeking_description
+        )
+        return render_template("forms/edit_artist.html", form=form, artist=artist)
 
 
 @app.route("/artists/<int:artist_id>/edit", methods=["POST"])
@@ -329,7 +333,9 @@ def create_artist_submission():
             finally:
                 db.session.close()
             if error:
-                flash(f'An error occurred. Artist {data.get("name")} could not be listed.')
+                flash(
+                    f'An error occurred. Artist {data.get("name")} could not be listed.'
+                )
                 abort(400)
             else:
                 # on successful db insert, flash success
@@ -338,8 +344,8 @@ def create_artist_submission():
     else:
         message = []
         for field, err in form.errors.items():
-            message.append(field + ' ' + '|'.join(err))
-        flash('Errors ' + str(message))
+            message.append(field + " " + "|".join(err))
+        flash("Errors " + str(message))
         return render_template("forms/new_artist.html", form=form)
 
 
@@ -400,8 +406,8 @@ def create_show_submission():
     else:
         message = []
         for field, err in form.errors.items():
-            message.append(field + ' ' + '|'.join(err))
-        flash('Errors ' + str(message))
+            message.append(field + " " + "|".join(err))
+        flash("Errors " + str(message))
         return render_template("forms/new_show.html", form=form)
 
 
