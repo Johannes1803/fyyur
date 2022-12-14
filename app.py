@@ -141,40 +141,46 @@ def create_venue_form():
 @app.route("/venues/create", methods=["POST"])
 def create_venue_submission():
     form = VenueForm()
-    with app.app_context():
-        data = {}
-        venue = Venue(
-            name=form.name.data,
-            city=form.city.data,
-            state=form.state.data,
-            address=form.address.data,
-            phone=form.phone.data,
-            genres=form.genres.data,
-            image_link=form.image_link.data,
-            website=form.website_link.data,
-            facebook_link=form.facebook_link.data,
-            seeking_talent=form.seeking_talent.data,
-            seeking_description=form.seeking_description.data,
-        )
-        error = False
-        try:
-            db.session.add(venue)
-            db.session.commit()
-            data["name"] = venue.name
-        except Exception as e:
-            db.session.rollback()
-            print(sys.exc_info())
-            error = True
-        finally:
-            db.session.close()
-        if error:
-            flash(f'An error occurred. Venue {data.get("name")} could not be listed.')
-            abort(400)
-        else:
-            # on successful db insert, flash success
-            flash(f"Venue {data.get('name')} was successfully listed!")
-            return render_template("pages/home.html")
-
+    if form.validate_on_submit():
+        with app.app_context():
+            data = {}
+            venue = Venue(
+                name=form.name.data,
+                city=form.city.data,
+                state=form.state.data,
+                address=form.address.data,
+                phone=form.phone.data,
+                genres=form.genres.data,
+                image_link=form.image_link.data,
+                website=form.website_link.data,
+                facebook_link=form.facebook_link.data,
+                seeking_talent=form.seeking_talent.data,
+                seeking_description=form.seeking_description.data,
+            )
+            error = False
+            try:
+                db.session.add(venue)
+                db.session.commit()
+                data["name"] = venue.name
+            except Exception as e:
+                db.session.rollback()
+                print(sys.exc_info())
+                error = True
+            finally:
+                db.session.close()
+            if error:
+                flash(f'An error occurred. Venue {data.get("name")} could not be listed.')
+                abort(400)
+            else:
+                # on successful db insert, flash success
+                flash(f"Venue {data.get('name')} was successfully listed!")
+                return render_template("pages/home.html")
+    else:
+        message = []
+        for field, err in form.errors.items():
+            message.append(field + ' ' + '|'.join(err))
+        flash('Errors ' + str(message))
+        return render_template("forms/new_venue.html", form=form)
 
 @app.route("/venues/<venue_id>", methods=["DELETE"])
 def delete_venue(venue_id):
@@ -296,38 +302,45 @@ def create_artist_form():
 def create_artist_submission():
     # called upon submitting the new artist listing form
     form = ArtistForm()
-    with app.app_context():
-        data = {}
-        artist = Artist(
-            name=form.name.data,
-            city=form.city.data,
-            state=form.state.data,
-            phone=form.phone.data,
-            genres=form.genres.data,
-            image_link=form.image_link.data,
-            website=form.website_link.data,
-            facebook_link=form.facebook_link.data,
-            seeking_venue=form.seeking_venue.data,
-            seeking_description=form.seeking_description.data,
-        )
-        error = False
-        try:
-            db.session.add(artist)
-            db.session.commit()
-            data["name"] = artist.name
-        except Exception as e:
-            db.session.rollback()
-            print(sys.exc_info())
-            error = True
-        finally:
-            db.session.close()
-        if error:
-            flash(f'An error occurred. Artist {data.get("name")} could not be listed.')
-            abort(400)
-        else:
-            # on successful db insert, flash success
-            flash(f"Artist {data.get('name')} was successfully listed!")
-            return render_template("pages/home.html")
+    if form.validate_on_submit():
+        with app.app_context():
+            data = {}
+            artist = Artist(
+                name=form.name.data,
+                city=form.city.data,
+                state=form.state.data,
+                phone=form.phone.data,
+                genres=form.genres.data,
+                image_link=form.image_link.data,
+                website=form.website_link.data,
+                facebook_link=form.facebook_link.data,
+                seeking_venue=form.seeking_venue.data,
+                seeking_description=form.seeking_description.data,
+            )
+            error = False
+            try:
+                db.session.add(artist)
+                db.session.commit()
+                data["name"] = artist.name
+            except Exception as e:
+                db.session.rollback()
+                print(sys.exc_info())
+                error = True
+            finally:
+                db.session.close()
+            if error:
+                flash(f'An error occurred. Artist {data.get("name")} could not be listed.')
+                abort(400)
+            else:
+                # on successful db insert, flash success
+                flash(f"Artist {data.get('name')} was successfully listed!")
+                return render_template("pages/home.html")
+    else:
+        message = []
+        for field, err in form.errors.items():
+            message.append(field + ' ' + '|'.join(err))
+        flash('Errors ' + str(message))
+        return render_template("forms/new_artist.html", form=form)
 
 
 #  Shows
@@ -385,6 +398,10 @@ def create_show_submission():
                 flash("Show was successfully listed!")
                 return render_template("pages/home.html")
     else:
+        message = []
+        for field, err in form.errors.items():
+            message.append(field + ' ' + '|'.join(err))
+        flash('Errors ' + str(message))
         return render_template("forms/new_show.html", form=form)
 
 
