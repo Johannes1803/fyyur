@@ -75,6 +75,7 @@ def index():
 
 @app.route("/venues")
 def venues():
+    form = VenueForm()
     with app.app_context():
         all_venues = Venue.query.order_by(Venue.name).all()
 
@@ -96,11 +97,12 @@ def venues():
                 ):
                     place["venues"].append(venue)
 
-        return render_template("pages/venues.html", areas=places_as_dict)
+        return render_template("pages/venues.html", areas=places_as_dict, form=form)
 
 
 @app.route("/venues/search", methods=["POST"])
 def search_venues():
+    form=VenueForm()
     # TODO: implement search on venues with partial string search. Ensure it is case-insensitive.
     # seach for Hop should return "The Musical Hop".
     # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
@@ -118,6 +120,7 @@ def search_venues():
         "pages/search_venues.html",
         results=response,
         search_term=request.form.get("search_term", ""),
+        form=form
     )
 
 
@@ -213,13 +216,15 @@ def delete_venue(venue_id):
 #  ----------------------------------------------------------------
 @app.route("/artists")
 def artists():
+    form = ArtistForm()
     artists = Artist.query.order_by(Artist.name).all()
-    return render_template("pages/artists.html", artists=artists)
+    return render_template("pages/artists.html", artists=artists, form=form)
 
 
 @app.route("/artists/search", methods=["POST"])
 def search_artists():
     # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
+    form = ArtistForm()
     # seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
     # search for "band" should return "The Wild Sax Band".
     response = {
@@ -236,15 +241,17 @@ def search_artists():
         "pages/search_artists.html",
         results=response,
         search_term=request.form.get("search_term", ""),
+        form=form
     )
 
 
 @app.route("/artists/<int:artist_id>")
 def show_artist(artist_id):
+    form = ArtistForm()
     # shows the artist page with the given artist_id
     with app.app_context():
         artist = Artist.query.get(artist_id)
-        return render_template("pages/show_artist.html", artist=artist)
+        return render_template("pages/show_artist.html", artist=artist, form=form)
 
 
 #  Update
