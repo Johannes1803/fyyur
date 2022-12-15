@@ -103,22 +103,19 @@ def venues():
 @app.route("/venues/search", methods=["POST"])
 def search_venues():
     form=VenueForm()
-    # TODO: implement search on venues with partial string search. Ensure it is case-insensitive.
-    # seach for Hop should return "The Musical Hop".
-    # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
-    response = {
-        "count": 1,
-        "data": [
-            {
-                "id": 2,
-                "name": "The Dueling Pianos Bar",
-                "num_upcoming_shows": 0,
-            }
-        ],
-    }
+    search_term = request.form.get("search_term", "")
+    search = "%{}%".format(search_term)
+    with app.app_context():
+        stmt = sqlalchemy.sql.expression.select(Venue.name, Venue.id).where(
+            Venue.name.ilike(search)
+        )
+        search_res = db.session.execute(stmt).all()
+
+    results = {"data": search_res, "count": len(search_res)}
+
     return render_template(
         "pages/search_venues.html",
-        results=response,
+        results=results,
         search_term=request.form.get("search_term", ""),
         form=form
     )
@@ -223,23 +220,22 @@ def artists():
 
 @app.route("/artists/search", methods=["POST"])
 def search_artists():
-    # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
     form = ArtistForm()
-    # seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
+    search_term = request.form.get("search_term", "")
+    search = "%{}%".format(search_term)
+    # search for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
     # search for "band" should return "The Wild Sax Band".
-    response = {
-        "count": 1,
-        "data": [
-            {
-                "id": 4,
-                "name": "Guns N Petals",
-                "num_upcoming_shows": 0,
-            }
-        ],
-    }
+    with app.app_context():
+        stmt = sqlalchemy.sql.expression.select(Artist.name, Artist.id).where(
+            Artist.name.ilike(search)
+        )
+        search_res = db.session.execute(stmt).all()
+        app.logger.debug(search_res)
+
+    results = {"data": search_res, "count": len(search_res)}
     return render_template(
         "pages/search_artists.html",
-        results=response,
+        results=results,
         search_term=request.form.get("search_term", ""),
         form=form
     )
