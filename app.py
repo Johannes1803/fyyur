@@ -402,7 +402,7 @@ def create_artist_submission():
                 phone=form.phone.data,
                 genres=form.genres.data,
                 image_link=form.image_link.data,
-                website=form.website_link.data,
+                website_link=form.website_link.data,
                 facebook_link=form.facebook_link.data,
                 seeking_venue=form.seeking_venue.data,
                 seeking_description=form.seeking_description.data
