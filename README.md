@@ -83,8 +83,9 @@ The tech stack includes the following:
 
   ```sh
   ├── README.md
-  ├── app.py *** the main driver of the app. Includes your SQLAlchemy models.
+  ├── app.py *** the main driver of the app. Includes route handling.
                     "python app.py" to run after installing dependencies
+  |── models.py *** includes the db models of sql-alchemy
   ├── config.py *** Database URLs, CSRF generation, etc
   ├── error.log
   ├── forms.py *** Your forms
